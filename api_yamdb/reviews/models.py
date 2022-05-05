@@ -6,7 +6,6 @@ from .validators import validate_year
 class Category(models.Model):
     name = models.CharField(max_length=200)
     slug = models.SlugField(unique=True)
-    description = models.TextField(blank=True)
 
     def __str__(self):
         return self.name
@@ -15,7 +14,6 @@ class Category(models.Model):
 class Genre(models.Model):
     name = models.CharField(max_length=200)
     slug = models.SlugField(unique=True)
-    description = models.TextField(blank=True)
 
     def __str__(self):
         return self.name
@@ -24,7 +22,7 @@ class Genre(models.Model):
 class Title(models.Model):
     name = models.CharField(max_length=200)
     yaer = models.IntegerField(validators=[validate_year])
-    description = models.TextField(blank=True)
+    description = models.TextField(blank=True, null=True)
     category = models.ForeignKey(
         Category,
         on_delete=models.SET_NULL,
