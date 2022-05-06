@@ -1,16 +1,12 @@
 from django.db import models
 
-from .validators import validate_year, validate_slug
+from .validators import validate_year
 
 
 class Category(models.Model):
     name = models.CharField(max_length=256)
-    slug = models.SlugField(
-        unique=True,
-        max_length=50,
-        validators=[validate_slug]
-    )
-   
+    slug = models.SlugField(unique=True)
+
     def __str__(self):
         return self.name
 
@@ -38,6 +34,9 @@ class Title(models.Model):
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        ordering = ['year']
 
 
 class GenreTitle(models.Model):
