@@ -1,6 +1,5 @@
-from rest_framework import serializers, validators
-from rest_framework.relations import SlugRelatedField
-from django.shortcuts import get_object_or_404
+from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from reviews.models import Category, Genre, Title, GenreTitle
 
@@ -9,28 +8,55 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = '__all__'
-        read_only_fields = '__all__'
+        fields = ('name', 'slug')
 
 
 class GenreSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Genre
-        fields = '__all__'
-        read_only_fields = '__all__'
+        fields = ('name', 'slug')
 
 
 class TitleSerializer(serializers.ModelSerializer):
-    genre = GenreSerializer(many=True)
+    genre = GenreSerializer(read_only=True, many=True)
+    category = CategorySerializer(read_only=True)
+
+    def to_internal_value(self, data):
+        internal_data = super().to_internal_value(data)
+        if 'category' in data:
+            cat_slug = data.get('category')
+            try:
+                category = Category.objects.get(slug=cat_slug)
+            except Category.DoesNotExist:
+                raise ValidationError(
+                    {'category': ['Такой категории нет']},
+                    code='invalid',
+                )
+            internal_data['category'] = category
+        if 'genre' in data:
+            genre_slugs = data.get('genre')
+            genres = []
+            for genre_slug in genre_slugs:
+                try:
+                    genre = Genre.objects.get(slug=genre_slug)
+                except Genre.DoesNotExist:
+                    raise ValidationError(
+                        {'genre': ['Такого жанра нет']},
+                        code='invalid',
+                    )
+                genres.append(genre)
+            internal_data['genre'] = genres
+        return internal_data
+
+    def create(self, validated_data):
+        print(validated_data)
+        genres = validated_data.pop('genre')
+        title = Title.objects.create(**validated_data)
+        for genre in genres:
+            GenreTitle.objects.create(title=title, genre=genre)
+        return title
 
     class Meta:
         model = Title
         fields = '__all__'
-        read_only_fields = '__all__'
-
-
-
-
-
-
