@@ -58,7 +58,16 @@ class TitleSerializer(serializers.ModelSerializer):
         return internal_data
 
     def create(self, validated_data):
-        print(validated_data)
+        if 'category' not in validated_data:
+            raise ValidationError(
+                {'category': ['Обязательно необходимо указать категорию']},
+                code='invalid',
+            )
+        if 'genre' not in validated_data:
+            raise ValidationError(
+                {'genre': ['Обязательно необходимо указать жанр']},
+                code='invalid',
+            )
         genres = validated_data.pop('genre')
         title = Title.objects.create(**validated_data)
         for genre in genres:
