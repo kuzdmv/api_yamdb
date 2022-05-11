@@ -2,7 +2,6 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
 from api_yamdb.settings import EMPTY_VALUE
-from api.serializers import logger
 from .models import Category, Comment, Genre, Review, Title, CustomUser
 
 
@@ -58,7 +57,6 @@ class UserAdminConfig(UserAdmin):
         return request.user.is_staff
 
     def has_change_permission(self, request, obj=None):
-        logger.debug(obj)
         if obj:
             return request.user.is_staff and not obj.is_staff
         return request.user.is_staff
@@ -67,9 +65,7 @@ class UserAdminConfig(UserAdmin):
         return request.user.is_staff
 
     def save_model(self, request, obj, form, change):
-        logger.debug(change)
         if isinstance(obj, CustomUser):
-            logger.debug('The object was recognized as CustomUser instance')
             super().save_model(request, obj, form, change)
             user_role = obj.role
             username = obj.username
@@ -96,14 +92,6 @@ class UserAdminConfig(UserAdmin):
                 else:
                     first_line = f'Создан пользователь {username}.'
             # при запуске в производство поставить отправку по почте
-            logger.debug(
-                f'{first_line}\nЕго роль: {user_role}.\n'
-                f'Его токен: {token}\n'
-                f'Его confirmation_code для обновления токена:\n'
-                f'{confirmation_code}'
-            )
-            logger.debug(f'user is active: {obj.is_active}')
-            logger.debug(f'user is staff: {obj.is_staff}')
         else:
             super().save_model(request, obj, form, change)
 
@@ -111,9 +99,8 @@ class UserAdminConfig(UserAdmin):
 @admin.register(Comment)
 class CommentAdminConfig(admin.ModelAdmin):
     list_display = (
-        'title',
-        'author',
         'review',
+        'author',
         'text',
         'pub_date'
     )

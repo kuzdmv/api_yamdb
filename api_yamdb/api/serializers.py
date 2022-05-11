@@ -1,7 +1,4 @@
-from django.shortcuts import get_object_or_404
-import logging
 import re
-import sys
 import jwt
 
 from api_yamdb.settings import SECRET_KEY
@@ -12,25 +9,21 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.relations import SlugRelatedField
 
 
-from reviews.models import Category, Genre, Title, GenreTitle, ROLE_CHOICES, CustomUser, Review, Comment
-
-
-formatter = logging.Formatter(
-    '%(asctime)s %(levelname)s %(message)s - строка %(lineno)s'
+from reviews.models import (
+    Category,
+    Genre, Title,
+    GenreTitle,
+    ROLE_CHOICES,
+    CustomUser,
+    Review,
+    Comment
 )
 
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-handler = logging.StreamHandler(sys.stdout)
-logger.addHandler(handler)
-handler.setFormatter(formatter)
-logger.disabled = False
-logger.debug('Логирование из serializers запущено')
-
-
 class CustomUserSerializer(serializers.ModelSerializer):
-    role = serializers.ChoiceField(choices=ROLE_CHOICES, default='user')
+    role = serializers.ChoiceField(
+        choices=ROLE_CHOICES, default='user'
+    )
 
     class Meta:
         model = CustomUser
@@ -53,7 +46,6 @@ class SignUpSerializer(serializers.ModelSerializer):
         )
 
     def validate_username(self, value):
-        logger.debug('Валидация username запущена')
         user = None
         try:
             user = CustomUser.objects.get(username=value)
@@ -63,15 +55,9 @@ class SignUpSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 'У нас уже есть пользователь с таким username.'
             )
-        logger.debug(f'Validate username: value: {value}')
         match = re.fullmatch(r'^[mM][eE]$', value)
         if match:
-            logger.debug(
-                'Зафиксировано недопустимое '
-                f'me-подобное имя пользователя {value}'
-            )
             raise serializers.ValidationError('Недопустимое имя пользователя.')
-        logger.debug(f'Валидация username: {user}')
         return value
 
     def validate_email(self, value):
@@ -84,12 +70,12 @@ class SignUpSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 ('У нас уже есть пользователь с таким email.')
             )
-        logger.debug(f'Валидация email: {user}')
         return value
 
 
 class MyTokenObtainSerializer(serializers.Serializer):
     token = serializers.CharField(read_only=True)
+
     def decode(code):
         return jwt.decode(
             jwt=code,
@@ -99,9 +85,6 @@ class MyTokenObtainSerializer(serializers.Serializer):
 
     def validate(self, data, decode):
         ind = self.initial_data
-        logger.debug(self.initial_data)
-        logger.debug('Validation starts...')
-        logger.debug(f'Data to validate: {data}')
         if 'username' not in ind:
             raise exceptions.ParseError(
                 'В запросе отсутствует поле "username".'
@@ -119,9 +102,6 @@ class MyTokenObtainSerializer(serializers.Serializer):
                 'В запросе отсутствует поле "confirmation_code".'
             )
         confirmation_code = ind.get('confirmation_code')
-        logger.debug(
-            f'Validation: {username_from_query}:\n {confirmation_code}'
-        )
         try:
             payload = decode(confirmation_code)
         except DecodeError:
@@ -141,10 +121,8 @@ class MyTokenObtainSerializer(serializers.Serializer):
             raise exceptions.ParseError(
                 'Похоже на подложный код подтверждения.'
             )
-
         if user_object:
             token = user_object.token
-            logger.debug(f'Токен из serializers: {token}')
             data = {'token': token}
             return data
         raise serializers.ValidationError(
@@ -157,6 +135,7 @@ class MyTokenObtainSerializer(serializers.Serializer):
             pass
         if 'confirmation_code' in self.initial_data:
             pass
+
 
 class CategorySerializer(serializers.ModelSerializer):
 
@@ -232,14 +211,18 @@ class TitleSerializer(serializers.ModelSerializer):
     def get_rating(self, obj):
         sum_rating = 0
         reviews = Review.objects.filter(title=obj.id)
-        count = reviews.count()
-        for review in reviews:
-            sum_rating += review.score
-        return int(sum_rating / count)
+        if reviews:
+            count = reviews.count()
+            for review in reviews:
+                sum_rating += review.score
+                return int(sum_rating / count)
+        return sum_rating
 
     class Meta:
         model = Title
-        fields = ('id', 'name', 'year', 'description', 'genre', 'category', 'rating')
+        fields = (
+            'id', 'name', 'year', 'rating', 'description', 'genre', 'category'
+        )
 
 
 class ReviewSerializer(serializers.ModelSerializer):

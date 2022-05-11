@@ -30,8 +30,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'django_filters',
-    'reviews.apps.ReviewsConfig',
-    'api.apps.ApiConfig',
+    'reviews',
+    'api',
 ]
 
 MIDDLEWARE = [
@@ -124,9 +124,7 @@ REST_FRAMEWORK = {
         'django_filters.rest_framework.DjangoFilterBackend',
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-
     'PAGE_SIZE': 10,
-
 }
 
 SIMPLE_JWT = {
@@ -145,4 +143,3 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'haus.esc@gmail.com'
 EMAIL_HOST_PASSWORD = os.getenv('MAIL_PASSWORD')
-
