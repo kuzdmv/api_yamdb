@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 import logging
 import re
 import sys
@@ -8,13 +9,16 @@ from jwt.exceptions import DecodeError
 
 from rest_framework import exceptions, serializers
 from rest_framework.exceptions import ValidationError
+from rest_framework.relations import SlugRelatedField
 
-from reviews.models import Category, Genre, Title, GenreTitle, ROLE_CHOICES, CustomUser
+
+from reviews.models import Category, Genre, Title, GenreTitle, ROLE_CHOICES, CustomUser, Review, Comment
 
 
 formatter = logging.Formatter(
     '%(asctime)s %(levelname)s %(message)s - строка %(lineno)s'
 )
+
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -179,6 +183,7 @@ class GenreSerializer(serializers.ModelSerializer):
 class TitleSerializer(serializers.ModelSerializer):
     genre = GenreSerializer(read_only=True, many=True)
     category = CategorySerializer(read_only=True)
+    rating = serializers.SerializerMethodField()
 
     def to_internal_value(self, data):
         internal_data = super().to_internal_value(data)
@@ -224,6 +229,32 @@ class TitleSerializer(serializers.ModelSerializer):
             GenreTitle.objects.create(title=title, genre=genre)
         return title
 
+    def get_rating(self, obj):
+        sum_rating = 0
+        reviews = Review.objects.filter(title=obj.id)
+        count = reviews.count()
+        for review in reviews:
+            sum_rating += review.score
+        return int(sum_rating / count)
+
     class Meta:
         model = Title
-        fields = ('id', 'name', 'year', 'description', 'genre', 'category')
+        fields = ('id', 'name', 'year', 'description', 'genre', 'category', 'rating')
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    author = SlugRelatedField(read_only=True, slug_field='username')
+
+    class Meta:
+        model = Review
+        exclude = ('title',)
+        read_only_fields = ('title',)
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    author = SlugRelatedField(read_only=True, slug_field='username')
+
+    class Meta:
+        model = Comment
+        exclude = ('review',)
+        read_only_fields = ('review',)

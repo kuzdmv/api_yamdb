@@ -4,14 +4,11 @@ import sys
 
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.core.validators import RegexValidator
-
 from django.db import models
 from rest_framework_simplejwt.tokens import AccessToken
-
-from api_yamdb.settings import SECRET_KEY
-
 from django.db import models
 
+from api_yamdb.settings import SECRET_KEY
 from .validators import validate_year
 
 
@@ -165,6 +162,7 @@ class CustomUser(AbstractUser):
         )
         return confirmation_code
 
+
 class Category(models.Model):
     name = models.CharField(max_length=256)
     slug = models.SlugField(unique=True)
@@ -184,7 +182,7 @@ class Genre(models.Model):
 class Title(models.Model):
     name = models.CharField(max_length=200)
     year = models.IntegerField(validators=[validate_year])
-    description = models.TextField(blank=True, null=True)
+    description = models.CharField(max_length=200)
     category = models.ForeignKey(
         Category,
         on_delete=models.SET_NULL,
@@ -207,3 +205,40 @@ class GenreTitle(models.Model):
 
     def __str__(self):
         return f'{self.title} {self.genre}'
+
+
+class Review(models.Model):
+    title = models.ForeignKey(
+        Title,
+        on_delete=models.CASCADE,
+        related_name='reviews'
+    )
+    text = models.TextField()
+    author = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='reviews'
+    )
+    score = models.IntegerField()
+    pub_date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.text[:15]
+
+
+class Comment(models.Model):
+    review = models.ForeignKey(
+        Review,
+        on_delete=models.CASCADE,
+        related_name='comments'
+    )
+    text = models.TextField()
+    author = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='comments'
+    )
+    pub_date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.text[:15]

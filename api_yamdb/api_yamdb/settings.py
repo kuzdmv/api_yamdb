@@ -1,9 +1,10 @@
 import os
-from datetime import timedelta
 
+from datetime import timedelta
 from dotenv import load_dotenv
 
 load_dotenv()
+
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -26,8 +27,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'reviews',
-    'api',
     'rest_framework',
     'rest_framework_simplejwt',
     'django_filters',
@@ -97,7 +96,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'ru'
 
 TIME_ZONE = 'UTC'
 
@@ -135,6 +134,7 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
+
 AUTH_USER_MODEL = 'reviews.CustomUser'
 
 EMPTY_VALUE: str = '-пусто-'
@@ -145,3 +145,4 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'haus.esc@gmail.com'
 EMAIL_HOST_PASSWORD = os.getenv('MAIL_PASSWORD')
+
