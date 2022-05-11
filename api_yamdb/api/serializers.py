@@ -8,7 +8,7 @@ from rest_framework import exceptions, serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.relations import SlugRelatedField
 
-
+from .methods import decode
 from reviews.models import (
     Category,
     Genre, Title,
@@ -76,14 +76,7 @@ class SignUpSerializer(serializers.ModelSerializer):
 class MyTokenObtainSerializer(serializers.Serializer):
     token = serializers.CharField(read_only=True)
 
-    def decode(code):
-        return jwt.decode(
-            jwt=code,
-            key=SECRET_KEY,
-            algorithms=['HS256']
-        )
-
-    def validate(self, data, decode):
+    def validate(self, data):
         ind = self.initial_data
         if 'username' not in ind:
             raise exceptions.ParseError(

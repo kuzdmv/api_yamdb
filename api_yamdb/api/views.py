@@ -1,5 +1,6 @@
 import jwt
 
+from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from rest_framework import (
     filters,
@@ -14,10 +15,9 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.exceptions import ParseError
 
 from .filters import TitleFilter
+from .methods import get_user_role
 from .permissions import (
     IsAdminOrReadOnly,
-    IsAuthorOrReadOnly,
-    IsAdminModeratorUserPermission,
     IsAdminUserCustom,
 )
 
@@ -34,7 +34,7 @@ from .serializers import (
 
 from api_yamdb.settings import SECRET_KEY
 from .mixins import ListDestroyCreateViewSet
-from reviews.models import Category, Genre, Title, CustomUser, Review, Comment
+from reviews.models import Category, Genre, Title, CustomUser, Review
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -50,23 +50,14 @@ class UserViewSet(viewsets.ModelViewSet):
             return (IsAdminUserCustom(),)
 
     @action(detail=True, url_path='me', methods=['get', 'patch'])
-    def get_user_role(token):
-        data = jwt.decode(
-            jwt=str(token),
-            key=SECRET_KEY,
-            algorithms=['HS256']
-        )
-        role = data.get('role')
-        return role
 
-    def getme(self, request, get_user_role):
+    def getme(self, request):
         request_user = request.user
         custom_user = CustomUser.objects.get(username=request_user.username)
         if request.method == 'GET':
             serializer = self.get_serializer(custom_user)
             return Response(serializer.data, status=status.HTTP_200_OK)
         if request.method == 'PATCH':
-            request_user_role = get_user_role(request.auth)
             rd = request.data.copy()
             if 'role' in rd:
                 del rd['role']
@@ -77,12 +68,8 @@ class UserViewSet(viewsets.ModelViewSet):
             serializer = self.get_serializer(custom_user, data=rd)
             if serializer.is_valid():
                 serializer.save()
-                user = serializer.instance
                 if 'email' in rd or 'username' in rd:
-                    username = user.username
-                    confirmation_code = user.confirmation_code
-                    # при запуске в производство поставить отправку по почте
-                return Response(serializer.data, status=status.HTTP_200_OK)
+                    return Response(serializer.data, status=status.HTTP_200_OK)
             return Response(serializer.errors, status=status.HTTP_200_OK)
 
     def perform_create(self, serializer):
@@ -102,11 +89,6 @@ class UserViewSet(viewsets.ModelViewSet):
         else:
             is_staff = False
         serializer.save(is_staff=is_staff)
-        user = serializer.instance
-        if 'email' in rd or 'username' in rd:
-            username = user.username
-            confirmation_code = user.confirmation_code
-            # при запуске в производство поставить отправку по почте
 
 
 class APISignupView(APIView):
@@ -181,6 +163,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
     filter_class = TitleFilter
+    filterset_class = TitleFilter
     permission_classes = (IsAdminOrReadOnly,)
 
 
