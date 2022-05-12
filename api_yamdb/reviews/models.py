@@ -1,7 +1,9 @@
 import jwt
 
+from api.methods import text_processor
+
 from django.contrib.auth.models import AbstractUser, BaseUserManager
-from django.core.validators import RegexValidator
+from django.core.validators import RegexValidator, MaxValueValidator, MinValueValidator
 from django.db import models
 from rest_framework_simplejwt.tokens import AccessToken
 
@@ -179,34 +181,72 @@ class Review(models.Model):
     title = models.ForeignKey(
         Title,
         on_delete=models.CASCADE,
-        related_name='reviews'
+        related_name='reviews',
+        verbose_name='Произведения',
+        null=True
     )
-    text = models.TextField()
+    text = models.TextField(
+        max_length=200,
+        verbose_name='Текст отзыва'
+    )
+    score = models.IntegerField(
+        validators=(
+            MinValueValidator(1),
+            MaxValueValidator(10)),
+        error_messages={'validators': 'Укажите оценку от 1 до 10'},
+        verbose_name='Оценка',
+    )
     author = models.ForeignKey(
         CustomUser,
         on_delete=models.CASCADE,
-        related_name='reviews'
+        related_name='reviews',
+        verbose_name='Автор',
+        null=True
     )
-    score = models.IntegerField()
-    pub_date = models.DateTimeField(auto_now_add=True)
+    pub_date = models.DateTimeField(
+        'Дата публикации', auto_now_add=True
+    )
+
+    class Meta:
+        verbose_name = 'Отзыв'
+        verbose_name_plural = 'Отзывы'
+        # Данная команда не даст повторно голосовать
+        constraints = [
+            models.UniqueConstraint(
+                fields=('title', 'author', ),
+                name='unique_review'
+            )]
 
     def __str__(self):
-        return self.text[:15]
+        return text_processor(self.text, 1)
 
 
 class Comment(models.Model):
-    review = models.ForeignKey(
-        Review,
-        on_delete=models.CASCADE,
-        related_name='comments'
+    title = models.ForeignKey(
+        Title, on_delete=models.CASCADE, null=True,
+        related_name='comments', verbose_name='Произведение'
     )
-    text = models.TextField()
     author = models.ForeignKey(
         CustomUser,
         on_delete=models.CASCADE,
-        related_name='comments'
+        related_name='comments',
+        verbose_name='Автор'
     )
-    pub_date = models.DateTimeField(auto_now_add=True)
+    review = models.ForeignKey(
+        Review,
+        on_delete=models.CASCADE,
+        related_name='comments',
+        verbose_name='Отзыв',
+        null=True
+    )
+    text = models.TextField('Текст комментария', max_length=200)
+    pub_date = models.DateTimeField(
+        'Дата публикации', auto_now_add=True, null=True
+    )
+
+    class Meta:
+        verbose_name = 'комментарий'
+        verbose_name_plural = 'комментарии'
 
     def __str__(self):
-        return self.text[:15]
+        return text_processor(self.text, 1)
