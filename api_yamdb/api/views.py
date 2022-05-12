@@ -1,7 +1,10 @@
 import jwt
 
 from django.core.mail import send_mail
+from django.db.models import Avg
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+
 from rest_framework import (
     filters,
     permissions,
@@ -9,15 +12,16 @@ from rest_framework import (
     viewsets
 )
 from rest_framework.decorators import action
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.exceptions import ParseError
 
 from .filters import TitleFilter
-from .methods import get_user_role
 from .permissions import (
     IsAdminOrReadOnly,
+    IsAdminModeratorUserPermission,
     IsAdminUserCustom,
 )
 
@@ -29,10 +33,10 @@ from .serializers import (
     ReviewSerializer,
     SignUpSerializer,
     TitleSerializer,
+    TitleCreateSerializer,
     CommentSerializer
 )
 
-from api_yamdb.settings import SECRET_KEY
 from .mixins import ListDestroyCreateViewSet
 from reviews.models import Category, Genre, Title, CustomUser, Review
 
@@ -159,40 +163,51 @@ class GenreViewSet(ListDestroyCreateViewSet):
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all()
-    serializer_class = TitleSerializer
-    filter_class = TitleFilter
+    queryset = Title.objects.annotate(
+        rating=Avg('reviews__score')
+    ).all()
+    pagination_class = PageNumberPagination
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_class = TitleFilter
     permission_classes = (IsAdminOrReadOnly,)
+
+    def get_serializer_class(self):
+        if self.action in ('list', 'retrieve'):
+            return TitleSerializer
+        return TitleCreateSerializer
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-
-    def get_title(self):
-        return get_object_or_404(Title, id=self.kwargs.get('title_id'))
+    permission_classes = (IsAdminModeratorUserPermission,)
 
     def get_queryset(self):
-        return self.get_title().reviews.all()
+        if getattr(self, 'swagger_fake_view', False):
+            return Title.objects.none()
+        title = get_object_or_404(Title, id=self.kwargs.get('title_id'))
+        return title.reviews.all()
 
     def perform_create(self, serializer):
-        if self.get_title().reviews.filter(
-            author__username=self.request.user
-        ).exists():
-            raise ParseError(
-                detail='Повторный отзыв запрещен!'
-            )
-        serializer.save(author=self.request.user, title=self.get_title())
+        title = get_object_or_404(Title, id=self.kwargs.get('title_id'))
+        serializer.save(author=self.request.user, title=title)
 
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
-
-    def get_review(self):
-        return get_object_or_404(Review, id=self.kwargs.get('review_id'))
+    permission_classes = (IsAdminModeratorUserPermission,)
 
     def get_queryset(self):
-        return self.get_review().comments.all()
+        review = get_object_or_404(
+            Review,
+            id=self.kwargs.get('review_id'),
+            title__id=self.kwargs.get('title_id')
+        )
+        return review.comments.all()
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user, review=self.get_review())
+        review = get_object_or_404(
+            Review,
+            title_id=self.kwargs.get('title_id'),
+            id=self.kwargs.get('review_id')
+        )
+        serializer.save(author=self.request.user, review=review)

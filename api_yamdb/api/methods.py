@@ -19,3 +19,13 @@ def get_user_role(token):
     )
     role = data.get('role')
     return role
+
+def text_processor(text, length):
+    """Оставляет указанное количество предложений текста."""
+    processored_text = text.split('. ')
+    if len(processored_text) <= length:
+        return text
+    else:
+        post_text1 = '. '.join((processored_text)[:length])
+        brief_text = post_text1 + '... <есть продолжение>'
+        return brief_text

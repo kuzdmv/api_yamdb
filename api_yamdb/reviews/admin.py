@@ -119,6 +119,7 @@ class ReviewAdminConfig(admin.ModelAdmin):
     empty_value_display = EMPTY_VALUE
 
 
+
 @admin.register(Category)
 class CategoryAdminConfig(admin.ModelAdmin):
     list_display = (
