@@ -5,14 +5,13 @@ from api_yamdb.settings import SECRET_KEY
 from jwt.exceptions import DecodeError
 
 from rest_framework import exceptions, serializers
-from rest_framework.exceptions import ValidationError
 from rest_framework.relations import SlugRelatedField
 
 from .methods import decode
 from reviews.models import (
     Category,
-    Genre, Title,
-    GenreTitle,
+    Genre,
+    Title,
     ROLE_CHOICES,
     CustomUser,
     Review,
@@ -130,6 +129,11 @@ class MyTokenObtainSerializer(serializers.Serializer):
             pass
 
 
+class GenreAndCategorySlugRelatedField(serializers.SlugRelatedField):
+    def to_representation(self, obj):
+        return {'name': obj.name, 'slug': obj.slug}
+
+
 class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -153,60 +157,24 @@ class GenreSerializer(serializers.ModelSerializer):
 
 
 class TitleSerializer(serializers.ModelSerializer):
-    genre = GenreSerializer(read_only=True, many=True)
-    category = CategorySerializer(read_only=True)
+    genre = GenreAndCategorySlugRelatedField(
+        slug_field='slug',
+        queryset=Genre.objects.all(),
+        many=True
+    )
+    category = GenreAndCategorySlugRelatedField(
+        slug_field='slug',
+        queryset=Category.objects.all()
+    )
     rating = serializers.SerializerMethodField()
 
-    def to_internal_value(self, data):
-        internal_data = super().to_internal_value(data)
-        if 'category' in data:
-            cat_slug = data.get('category')
-            try:
-                category = Category.objects.get(slug=cat_slug)
-            except Category.DoesNotExist:
-                raise ValidationError(
-                    {'category': ['Такой категории нет']},
-                    code='invalid',
-                )
-            internal_data['category'] = category
-        if 'genre' in data:
-            genre_slugs = data.get('genre')
-            genres = []
-            for genre_slug in genre_slugs:
-                try:
-                    genre = Genre.objects.get(slug=genre_slug)
-                except Genre.DoesNotExist:
-                    raise ValidationError(
-                        {'genre': ['Такого жанра нет']},
-                        code='invalid',
-                    )
-                genres.append(genre)
-            internal_data['genre'] = genres
-        return internal_data
-
-    def create(self, validated_data):
-        if 'category' not in validated_data:
-            raise ValidationError(
-                {'category': ['Обязательно необходимо указать категорию']},
-                code='invalid',
-            )
-        if 'genre' not in validated_data:
-            raise ValidationError(
-                {'genre': ['Обязательно необходимо указать жанр']},
-                code='invalid',
-            )
-        genres = validated_data.pop('genre')
-        title = Title.objects.create(**validated_data)
-        for genre in genres:
-            GenreTitle.objects.create(title=title, genre=genre)
-        return title
-
     def get_rating(self, obj):
-        sum_rating = 0
+        sum_rating = None
         reviews = Review.objects.filter(title=obj.id)
         if reviews:
             count = reviews.count()
             for review in reviews:
+                sum_rating = 0
                 sum_rating += review.score
                 return int(sum_rating / count)
         return sum_rating

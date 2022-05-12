@@ -50,7 +50,6 @@ class UserViewSet(viewsets.ModelViewSet):
             return (IsAdminUserCustom(),)
 
     @action(detail=True, url_path='me', methods=['get', 'patch'])
-
     def getme(self, request):
         request_user = request.user
         custom_user = CustomUser.objects.get(username=request_user.username)
