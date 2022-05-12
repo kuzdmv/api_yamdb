@@ -135,7 +135,7 @@ class Category(models.Model):
         return self.name
 
     class Meta:
-        ordering = ['slug']
+        ordering = ('slug',)
 
 
 class Genre(models.Model):
@@ -146,7 +146,7 @@ class Genre(models.Model):
         return self.name
 
     class Meta:
-        ordering = ['slug']
+        ordering = ('slug',)
 
 
 class Title(models.Model):
@@ -166,7 +166,7 @@ class Title(models.Model):
         return self.name
 
     class Meta:
-        ordering = ['year']
+        ordering = ('year',)
 
 
 class GenreTitle(models.Model):
@@ -208,6 +208,7 @@ class Review(models.Model):
     )
 
     class Meta:
+        ordering = ('-pub_date',)
         verbose_name = 'Отзыв'
         verbose_name_plural = 'Отзывы'
         # Данная команда не даст повторно голосовать
@@ -245,6 +246,7 @@ class Comment(models.Model):
     )
 
     class Meta:
+        ordering = ('-pub_date',)
         verbose_name = 'комментарий'
         verbose_name_plural = 'комментарии'
 
