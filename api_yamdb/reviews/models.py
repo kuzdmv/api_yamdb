@@ -1,9 +1,12 @@
 import jwt
 
 from api.methods import text_processor
-
 from django.contrib.auth.models import AbstractUser, BaseUserManager
-from django.core.validators import RegexValidator, MaxValueValidator, MinValueValidator
+from django.core.validators import (
+    RegexValidator,
+    MaxValueValidator,
+    MinValueValidator
+)
 from django.db import models
 from rest_framework_simplejwt.tokens import AccessToken
 

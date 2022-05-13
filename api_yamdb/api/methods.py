@@ -10,6 +10,7 @@ def decode(code):
         algorithms=['HS256']
     )
 
+
 def get_user_role(token):
     """Извлекает роль из токена, без обращения к базе."""
     data = jwt.decode(
@@ -19,6 +20,7 @@ def get_user_role(token):
     )
     role = data.get('role')
     return role
+
 
 def text_processor(text, length):
     """Оставляет указанное количество предложений текста."""

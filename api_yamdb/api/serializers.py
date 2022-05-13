@@ -2,9 +2,7 @@ import re
 
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
-
 from jwt.exceptions import DecodeError
-
 from rest_framework import exceptions, serializers
 
 from .methods import decode

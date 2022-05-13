@@ -68,30 +68,12 @@ class UserAdminConfig(UserAdmin):
         if isinstance(obj, CustomUser):
             super().save_model(request, obj, form, change)
             user_role = obj.role
-            username = obj.username
             if user_role == 'admin':
                 obj.is_staff = True
             # на случай изменения объекта
             else:
                 obj.is_staff = False
             obj.save()
-            confirmation_code = obj.confirmation_code
-            token = obj.token
-            if change:
-                if obj.is_superuser:
-                    pre_first_line = (f'\tВНИМАНИЕ! Объект был изменен на '
-                                      f'"суперпользователь {username}".')
-                else:
-                    pre_first_line = (f'\tВНИМАНИЕ! Объект был изменен на '
-                                      f'"пользователь {username}".')
-                first_line = (f'{pre_first_line}\n\tДля него были '
-                              'созданы новые коды доступа.')
-            else:
-                if obj.is_superuser:
-                    first_line = f'Создан суперпользователь {username}.'
-                else:
-                    first_line = f'Создан пользователь {username}.'
-            # при запуске в производство поставить отправку по почте
         else:
             super().save_model(request, obj, form, change)
 
@@ -117,7 +99,6 @@ class ReviewAdminConfig(admin.ModelAdmin):
         'pub_date'
     )
     empty_value_display = EMPTY_VALUE
-
 
 
 @admin.register(Category)
