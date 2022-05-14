@@ -1,6 +1,6 @@
 import jwt
 
-from api.methods import text_processor
+from api.utils import text_processor
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.core.validators import (
     RegexValidator,
@@ -25,11 +25,11 @@ class CustomUserManager(BaseUserManager):
         other_fields.setdefault('is_staff', True)
         other_fields.setdefault('is_superuser', True)
         other_fields.setdefault('is_active', True)
-        if other_fields.get('is_staff') is not True:
+        if not other_fields.get('is_staff'):
             raise ValueError(
                 '"is_staff" суперпользователя должно быть в режиме "True"'
             )
-        if other_fields.get('is_superuser') is not True:
+        if not other_fields.get('is_superuser'):
             raise ValueError(
                 '"is_superuser" суперпользователя должно быть в режиме "True"'
             )

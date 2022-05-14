@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404
 from jwt.exceptions import DecodeError
 from rest_framework import exceptions, serializers
 
-from .methods import decode
+from .utils import decode
 from reviews.models import (
     Category,
     Genre,

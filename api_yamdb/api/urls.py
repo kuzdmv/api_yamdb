@@ -29,7 +29,7 @@ router_v1_b.register(
 
 urlpatterns = [
     path('v1/', include(router_v1_a.urls)),
-    path('v1/auth/signup/', APISignupView.as_view()),
-    path('v1/auth/token/', TokenView.as_view()),
+    path('v1/auth/signup/', APISignupView.as_view(), name='signup'),
+    path('v1/auth/token/', TokenView.as_view(), name='token'),
     path('v1/', include(router_v1_b.urls)),
 ]

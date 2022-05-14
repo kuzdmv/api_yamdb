@@ -179,8 +179,6 @@ class ReviewViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAdminModeratorUserPermission,)
 
     def get_queryset(self):
-        if getattr(self, 'swagger_fake_view', False):
-            return Title.objects.none()
         title = get_object_or_404(Title, id=self.kwargs.get('title_id'))
         return title.reviews.all()
 
