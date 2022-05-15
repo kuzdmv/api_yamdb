@@ -26,9 +26,9 @@ from .permissions import (
     IsAdminOrSuperUserOrReadOnly,
     PermissionReviewComment,
 )
+from .mixins import ListCreateDestroyViewSet
 from reviews.models import User, Category, Genre, Title, Review
 from api_yamdb.settings import EMAIL_HOST_USER
-from .mixins import ListCreateDestroyViewSet
 
 
 @api_view(['POST'])

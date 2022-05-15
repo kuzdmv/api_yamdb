@@ -1,7 +1,11 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import (
+    MaxValueValidator,
+    MinValueValidator
+)
 
-from api.validators import validate_year
+from .validators import validate_year
 
 
 class User(AbstractUser):
@@ -39,6 +43,7 @@ class Category(models.Model):
     slug = models.SlugField('Страница', max_length=50, unique=True)
 
     class Meta:
+        ordering = ('slug',)
         verbose_name = 'Категория'
         verbose_name_plural = 'Категории'
 
@@ -51,6 +56,7 @@ class Genre(models.Model):
     slug = models.SlugField('Страница', max_length=50, unique=True)
 
     class Meta:
+        ordering = ('slug',)
         verbose_name = 'Жанр'
         verbose_name_plural = 'Жанры'
 
@@ -73,10 +79,13 @@ class Title(models.Model):
         verbose_name='Категория',
     )
     genre = models.ManyToManyField(
-        Genre, related_name='titles', blank=True, verbose_name='Жанр',
+        Genre, related_name='titles',
+        blank=True,
+        verbose_name='Жанр',
     )
 
     class Meta:
+        ordering = ('year',)
         verbose_name = 'Произведение'
         verbose_name_plural = 'Произведения'
 
@@ -95,18 +104,27 @@ class Review(models.Model):
     title = models.ForeignKey(
         Title, on_delete=models.CASCADE, related_name='reviews'
     )
-    score = models.IntegerField()
-
-    def __str__(self):
-        return self.text[:15]
+    score = models.IntegerField(
+        validators=(
+            MinValueValidator(1),
+            MaxValueValidator(10)),
+        error_messages={'validators': 'Укажите оценку от 1 до 10'},
+        verbose_name='Оценка',
+    )
 
     class Meta:
+        ordering = ('-pub_date',)
+        verbose_name = 'Отзыв'
+        verbose_name_plural = 'Отзывы'
         constraints = [
             models.UniqueConstraint(
                 fields=['author', 'title'],
                 name='second review'
             )
         ]
+
+    def __str__(self):
+        return self.text[:15]
 
 
 class Comment(models.Model):
@@ -120,6 +138,11 @@ class Comment(models.Model):
     pub_date = models.DateTimeField(
         'Дата добавления комментария', auto_now_add=True
     )
+
+    class Meta:
+        ordering = ('-pub_date',)
+        verbose_name = 'комментарий'
+        verbose_name_plural = 'комментарии'
 
     def __str__(self):
         return self.text[:15]

@@ -33,16 +33,20 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ('name', 'slug')
-        lookup_field = 'slug'
+        exclude = ('id',)
+        extra_kwargs = {
+            'url': {'lookup_field': 'slug'}
+        }
 
 
 class GenreSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Genre
-        fields = ('name', 'slug')
-        lookup_field = 'slug'
+        exclude = ('id',)
+        extra_kwargs = {
+            'url': {'lookup_field': 'slug'}
+        }
 
 
 class TitleRetrieveSerializer(serializers.ModelSerializer):
@@ -59,7 +63,8 @@ class TitleRetrieveSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Title
-        fields = '__all__'
+        fields = ('id', 'name', 'year', 'rating',
+                  'description', 'genre', 'category')
 
 
 class TitleUpdateSerializer(serializers.ModelSerializer):
@@ -98,12 +103,6 @@ class ReviewSerializer(serializers.ModelSerializer):
         ).exists()):
             raise serializers.ValidationError('Нельзя оставить второй отзыв.')
         return data
-
-    def validate_review(self, score):
-        if 10 > score < 1:
-            raise serializers.ValidationError(
-                'Оценка должна быть в диапазоне от 1 до 10.')
-        return score
 
 
 class CommentSerializer(serializers.ModelSerializer):
