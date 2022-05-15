@@ -133,7 +133,7 @@ SIMPLE_JWT = {
 }
 
 
-AUTH_USER_MODEL = 'reviews.CustomUser'
+AUTH_USER_MODEL = 'reviews.User'
 
 EMPTY_VALUE: str = '-пусто-'
 
@@ -143,3 +143,4 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'haus.esc@gmail.com'
 EMAIL_HOST_PASSWORD = os.getenv('MAIL_PASSWORD')
+

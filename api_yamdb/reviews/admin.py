@@ -2,10 +2,10 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
 from api_yamdb.settings import EMPTY_VALUE
-from .models import Category, Comment, Genre, Review, Title, CustomUser
+from .models import Category, Comment, Genre, Review, Title, User
 
 
-@admin.register(CustomUser)
+@admin.register(User)
 class UserAdminConfig(UserAdmin):
     default_site = 'api_yamdb.users.admin.AdminAreaSite'
     list_display = (
@@ -65,7 +65,7 @@ class UserAdminConfig(UserAdmin):
         return request.user.is_staff
 
     def save_model(self, request, obj, form, change):
-        if isinstance(obj, CustomUser):
+        if isinstance(obj, User):
             super().save_model(request, obj, form, change)
             user_role = obj.role
             if user_role == 'admin':
