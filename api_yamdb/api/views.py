@@ -36,8 +36,8 @@ from api_yamdb.settings import EMAIL_HOST_USER
 def send_confirmation_code(request):
     serializer = UserSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    email = request.data.get('email')
-    username = request.data.get('username')
+    email = serializer.validated_data.get('email')
+    username = serializer.validated_data.get('username')
     serializer.save(email=email, username=username)
     user = get_object_or_404(User, email=email, username=username)
     confirmation_code = default_token_generator.make_token(user)
@@ -56,13 +56,13 @@ def send_confirmation_code(request):
 @permission_classes([AllowAny])
 def token_access(request):
     serializer = TokenAccessSerializer(data=request.data)
-    if serializer.is_valid():
-        username = request.data.get('username')
-        confirmation_code = request.data.get('confirmation_code')
-        user = get_object_or_404(User, username=username)
-        if default_token_generator.check_token(user, confirmation_code):
-            token = RefreshToken.for_user(user)
-            return Response({'token': str(token)})
+    serializer.is_valid(raise_exception=True)
+    username = serializer.validated_data.get('username')
+    confirmation_code = serializer.validated_data.get('confirmation_code')
+    user = get_object_or_404(User, username=username)
+    if default_token_generator.check_token(user, confirmation_code):
+        token = RefreshToken.for_user(user)
+        return Response({'token': str(token)})
     return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -88,12 +88,9 @@ class UserViewSet(viewsets.ModelViewSet):
             data=request.data,
             partial=True
         )
-        if serializer.is_valid():
-            serializer.save(role=request.user.role)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(
-            serializer.data, status=status.HTTP_400_BAD_REQUEST
-        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save(role=request.user.role)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class CategoryViewSet(ListCreateDestroyViewSet):

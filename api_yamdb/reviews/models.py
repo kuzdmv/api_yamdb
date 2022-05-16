@@ -27,15 +27,15 @@ class User(AbstractUser):
     )
     role = models.CharField(max_length=9, choices=ROLE_CHOICES, default=USER)
 
+    class Meta:
+        verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'
+
     def save(self, *args, **kwargs):
         self.is_active = True
         if self.role == 'admin':
             self.is_staff = True
         super(User, self).save(*args, **kwargs)
-
-    class Meta:
-        verbose_name = 'Пользователь'
-        verbose_name_plural = 'Пользователи'
 
 
 class Category(models.Model):
