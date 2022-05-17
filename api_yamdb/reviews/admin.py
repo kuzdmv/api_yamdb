@@ -68,7 +68,7 @@ class UserAdminConfig(UserAdmin):
         if isinstance(obj, User):
             super().save_model(request, obj, form, change)
             user_role = obj.role
-            if user_role == 'admin':
+            if user_role == User.ADMIN:
                 obj.is_staff = True
             # на случай изменения объекта
             else:

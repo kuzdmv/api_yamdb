@@ -33,7 +33,7 @@ class User(AbstractUser):
 
     def save(self, *args, **kwargs):
         self.is_active = True
-        if self.role == 'admin':
+        if self.role == self.ADMIN:
             self.is_staff = True
         super(User, self).save(*args, **kwargs)
 
